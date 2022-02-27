@@ -1,0 +1,64 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: App Runner Template for Python RestApi
+
+Parameters:
+  PythonAPIPort:
+    Type: Number
+    Description: The Port that Python API listening on
+    Default: 5000
+    AllowedValues:
+      - 5001
+      - 5002
+      - 5003
+  GitHubBranch:
+    Type: String
+    Description: GitHub Branch you want to deploy
+    Default: master
+  Environment:
+    Type: String
+    Description: Environment to Deploy
+  WelcomeMessage:
+    Type: String
+    Description: Welcome Message for the API
+
+Resources:
+  PythonRestAPI:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: !Sub RESTAPI-${Environment}
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          ConnectionArn: "arn:aws:apprunner:us-east-2:864227929192:connection/DemoConnection/aaec8e02677441bb9c22343ca394dadb"
+        AutoDeploymentsEnabled: true
+        CodeRepository:
+          RepositoryUrl: "https://github.com/bbachi/python-flask-restapi.git"
+          SourceCodeVersion:
+            Type: BRANCH
+            Value: !Ref GitHubBranch
+          CodeConfiguration:
+            ConfigurationSource: API
+            CodeConfigurationValues:
+              Runtime: PYTHON_3
+              BuildCommand: "pip install -r requirements.txt"
+              StartCommand: "flask run --host=0.0.0.0"
+              Port: !Ref PythonAPIPort
+              RuntimeEnvironmentVariables:
+                -
+                  Name: API_WORKS_MESSAGE
+                  Value: !Ref WelcomeMessage
+      InstanceConfiguration:
+        Cpu: 1 vCPU
+        Memory: 2 GB
+        
+Outputs:
+  AppRunnerServiceArn:
+    Description: ServiceArn of GitHub
+    Value: !GetAtt PythonRestAPI.ServiceArn
+  AppRunnerServiceId:
+    Description: AppRunnerServiceId
+    Value: !GetAtt PythonRestAPI.ServiceId
+  AppRunnerServiceUrl:
+    Description: AppRunnerServiceUrl
+    Value: !GetAtt PythonRestAPI.ServiceUrl
+
